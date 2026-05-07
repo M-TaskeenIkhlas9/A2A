@@ -16,6 +16,26 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
   }
+
+  ::selection {
+    @apply bg-accent/30 text-primary;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2;
+  }
+
+  input, textarea, select {
+    @apply outline-none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    @apply ring-0;
+  }
+
+  button:focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2;
+  }
 }
 
 @layer components {
@@ -62,10 +82,95 @@
   .text-small {
     @apply text-sm font-body text-primary/70;
   }
+
+  .link-hover {
+    @apply relative inline-block;
+  }
+
+  .link-hover::after {
+    @apply content-[''] absolute left-0 bottom-0 w-0 h-0.5 bg-accent transition-all duration-300;
+  }
+
+  .link-hover:hover::after {
+    @apply w-full;
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
