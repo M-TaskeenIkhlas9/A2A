@@ -1,66 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  size: string;
-  color: string;
-  quantity: number;
-}
-
-const initialCartItems: CartItem[] = [
-  {
-    id: "1",
-    name: "Premium Wool Blend Coat",
-    price: 449,
-    size: "M",
-    color: "Black",
-    quantity: 1,
-  },
-  {
-    id: "2",
-    name: "Silk Evening Dress",
-    price: 389,
-    size: "S",
-    color: "Navy",
-    quantity: 2,
-  },
-];
+import { useCart, useToast } from "@/context";
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+  const { items, subtotal, updateQuantity, removeItem } = useCart();
+  const { showToast } = useToast();
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
   const shipping = subtotal > 200 ? 0 : 25;
   const total = subtotal + shipping;
 
-  if (cartItems.length === 0) {
+  const handleRemove = (id: string, name: string) => {
+    removeItem(id);
+    showToast(`${name} removed from cart`, "success");
+  };
+
+  if (items.length === 0) {
     return (
       <div className="pt-20 lg:pt-24 min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
           <ShoppingBag size={64} className="mx-auto text-gray-300 mb-6" />
           <h1 className="font-serif text-3xl font-bold text-primary mb-4">
             Your Cart is Empty
@@ -71,7 +36,7 @@ export default function CartPage() {
           <Link href="/shop" className="btn-primary">
             CONTINUE SHOPPING
           </Link>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -82,7 +47,7 @@ export default function CartPage() {
       <div className="bg-background py-4">
         <div className="container-custom">
           <nav className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-500 hover:text-primary">
+            <Link href="/" className="text-gray-500 hover:text-primary transition-colors">
               Home
             </Link>
             <ChevronRight size={14} className="text-gray-400" />
@@ -106,78 +71,95 @@ export default function CartPage() {
             {/* Cart Items */}
             <div className="lg:col-span-2">
               <div className="space-y-6">
-                {cartItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex gap-4 sm:gap-6 pb-6 border-b border-gray-200"
-                  >
-                    {/* Product Image */}
-                    <div className="w-24 sm:w-32 aspect-[3/4] bg-gray-100 flex-shrink-0" />
+                {items.map((item, index) => {
+                  const itemKey = `${item.id}-${item.size}-${item.color}`;
+                  return (
+                    <motion.div
+                      key={itemKey}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex gap-4 sm:gap-6 pb-6 border-b border-gray-200"
+                    >
+                      {/* Product Image */}
+                      <Link
+                        href={`/shop/${item.id}`}
+                        className="w-24 sm:w-32 aspect-[3/4] bg-gray-100 flex-shrink-0 relative overflow-hidden"
+                      >
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </Link>
 
-                    {/* Product Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between gap-4">
-                        <div>
-                          <Link
-                            href={`/shop/${item.id}`}
-                            className="font-medium text-primary hover:text-accent transition-colors line-clamp-1"
+                      {/* Product Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between gap-4">
+                          <div>
+                            <Link
+                              href={`/shop/${item.id}`}
+                              className="font-medium text-primary hover:text-accent transition-colors line-clamp-1"
+                            >
+                              {item.name}
+                            </Link>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Size: {item.size} | Color: {item.color}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRemove(itemKey, item.name)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            aria-label="Remove item"
                           >
-                            {item.name}
-                          </Link>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Size: {item.size} | Color: {item.color}
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-end justify-between mt-4">
+                          {/* Quantity */}
+                          <div className="flex items-center border border-gray-300">
+                            <button
+                              onClick={() =>
+                                updateQuantity(itemKey, item.quantity - 1)
+                              }
+                              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="w-10 h-8 flex items-center justify-center text-sm font-medium border-x border-gray-300">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                updateQuantity(itemKey, item.quantity + 1)
+                              }
+                              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+
+                          {/* Price */}
+                          <p className="font-semibold text-primary">
+                            ${(item.price * item.quantity).toFixed(2)}
                           </p>
                         </div>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 size={18} />
-                        </button>
                       </div>
-
-                      <div className="flex items-end justify-between mt-4">
-                        {/* Quantity */}
-                        <div className="flex items-center border border-gray-300">
-                          <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="w-10 h-8 flex items-center justify-center text-sm font-medium">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-
-                        {/* Price */}
-                        <p className="font-semibold text-primary">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
 
               {/* Continue Shopping */}
               <Link
                 href="/shop"
-                className="inline-flex items-center gap-2 text-primary hover:text-accent transition-colors mt-8"
+                className="inline-flex items-center gap-2 text-primary hover:text-accent transition-colors mt-8 group"
               >
-                <ChevronRight size={18} className="rotate-180" />
+                <ChevronRight size={18} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
                 Continue Shopping
               </Link>
             </div>
@@ -197,7 +179,7 @@ export default function CartPage() {
                 <div className="space-y-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">
-                      Subtotal ({cartItems.length} items)
+                      Subtotal ({items.length} {items.length === 1 ? "item" : "items"})
                     </span>
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
@@ -234,7 +216,7 @@ export default function CartPage() {
                     <input
                       type="text"
                       placeholder="Enter code"
-                      className="flex-1 px-4 py-2 border border-gray-300 focus:outline-none focus:border-primary text-sm"
+                      className="flex-1 px-4 py-2 border border-gray-300 focus:outline-none focus:border-primary text-sm transition-colors"
                     />
                     <button className="btn-secondary px-4 py-2 text-sm">
                       Apply

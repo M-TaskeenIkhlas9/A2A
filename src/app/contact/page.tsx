@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
+import { useToast } from "@/context";
 
 const contactInfo = [
   {
@@ -34,6 +35,7 @@ const socialLinks = [
 ];
 
 export default function ContactPage() {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -51,6 +53,7 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
+    showToast("Message sent successfully!", "success");
   };
 
   return (
@@ -236,7 +239,7 @@ export default function ContactPage() {
                         href={social.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-colors text-sm font-medium"
+                        className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-colors text-xs font-medium"
                         aria-label={social.label}
                       >
                         {social.label[0]}
@@ -255,7 +258,7 @@ export default function ContactPage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <MapPin size={48} className="text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Map Integration</p>
+            <p className="text-gray-500 font-medium">Visit Our Flagship Store</p>
             <p className="text-sm text-gray-400">123 Fashion Avenue, New York</p>
           </div>
         </div>

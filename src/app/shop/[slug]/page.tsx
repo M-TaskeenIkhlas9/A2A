@@ -1,38 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Heart, Minus, Plus, Share2, Truck, RotateCcw, Shield } from "lucide-react";
+import { ProductCard } from "@/components/product";
+import { getProductBySlug, products } from "@/data/products";
+import { useCart, useToast } from "@/context";
 
-const sizes = ["XS", "S", "M", "L", "XL"];
-const colors = [
-  { name: "Black", hex: "#000000" },
-  { name: "Navy", hex: "#1a365d" },
-  { name: "Beige", hex: "#d4c4a8" },
-];
+export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
+  const product = getProductBySlug(slug);
 
-export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColor, setSelectedColor] = useState(colors[0].name);
+  const [selectedColor, setSelectedColor] = useState(product?.colors[0]?.name || "");
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const product = {
-    name: "Premium Wool Blend Coat",
-    price: 449,
-    originalPrice: 599,
-    description:
-      "Crafted from the finest wool blend, this elegant coat combines timeless sophistication with modern comfort. Features a tailored fit, luxurious lining, and meticulous attention to detail that defines the AURELION experience.",
-    images: [1, 2, 3, 4],
+  const { addItem } = useCart();
+  const { showToast } = useToast();
+
+  if (!product) {
+    return (
+      <div className="pt-20 lg:pt-24 min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="font-serif text-3xl font-bold text-primary mb-4">
+            Product Not Found
+          </h1>
+          <p className="text-gray-600 mb-8">
+            The product you&apos;re looking for doesn&apos;t exist.
+          </p>
+          <Link href="/shop" className="btn-primary">
+            BACK TO SHOP
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      showToast("Please select a size", "error");
+      return;
+    }
+
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0],
+      size: selectedSize,
+      color: selectedColor,
+      quantity,
+    });
+    showToast(`${product.name} added to cart`, "cart");
   };
 
-  const relatedProducts = [
-    { id: 1, name: "Silk Evening Dress", price: 389 },
-    { id: 2, name: "Cashmere Sweater", price: 279 },
-    { id: 3, name: "Tailored Trousers", price: 199 },
-    { id: 4, name: "Leather Belt", price: 129 },
-  ];
+  const relatedProducts = products
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, 4);
 
   return (
     <div className="pt-20 lg:pt-24">
@@ -40,15 +68,15 @@ export default function ProductPage() {
       <div className="bg-background py-4">
         <div className="container-custom">
           <nav className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-500 hover:text-primary">
+            <Link href="/" className="text-gray-500 hover:text-primary transition-colors">
               Home
             </Link>
             <ChevronRight size={14} className="text-gray-400" />
-            <Link href="/shop" className="text-gray-500 hover:text-primary">
+            <Link href="/shop" className="text-gray-500 hover:text-primary transition-colors">
               Shop
             </Link>
             <ChevronRight size={14} className="text-gray-400" />
-            <span className="text-primary">{product.name}</span>
+            <span className="text-primary truncate">{product.name}</span>
           </nav>
         </div>
       </div>
@@ -63,20 +91,38 @@ export default function ProductPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="aspect-[3/4] bg-gray-100 mb-4">
-                {/* Main image placeholder */}
+              <div className="relative aspect-[3/4] bg-gray-100 mb-4 overflow-hidden">
+                <Image
+                  src={product.images[activeImage]}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                {product.isNew && (
+                  <span className="absolute top-4 left-4 bg-accent text-primary text-xs px-3 py-1 font-medium">
+                    NEW
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-4 gap-3">
-                {product.images.map((_, index) => (
+                {product.images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveImage(index)}
-                    className={`aspect-square bg-gray-100 border-2 transition-colors ${
+                    className={`relative aspect-square bg-gray-100 border-2 transition-colors overflow-hidden ${
                       activeImage === index
                         ? "border-primary"
                         : "border-transparent hover:border-gray-300"
                     }`}
-                  />
+                  >
+                    <Image
+                      src={img}
+                      alt={`${product.name} view ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
                 ))}
               </div>
             </motion.div>
@@ -88,19 +134,26 @@ export default function ProductPage() {
               transition={{ duration: 0.6 }}
               className="lg:pl-8"
             >
-              <span className="text-accent text-sm tracking-[0.2em] uppercase">
-                New Arrival
-              </span>
+              {product.isNew && (
+                <span className="text-accent text-sm tracking-[0.2em] uppercase">
+                  New Arrival
+                </span>
+              )}
               <h1 className="font-serif text-3xl sm:text-4xl font-bold text-primary mt-2">
                 {product.name}
               </h1>
               <div className="flex items-center gap-3 mt-4">
                 <span className="text-2xl font-semibold text-primary">
-                  ${product.price}
+                  ${product.price.toFixed(2)}
                 </span>
                 {product.originalPrice && (
                   <span className="text-lg text-gray-400 line-through">
-                    ${product.originalPrice}
+                    ${product.originalPrice.toFixed(2)}
+                  </span>
+                )}
+                {product.originalPrice && (
+                  <span className="text-sm text-red-500 font-medium">
+                    Save ${(product.originalPrice - product.price).toFixed(2)}
                   </span>
                 )}
               </div>
@@ -115,17 +168,18 @@ export default function ProductPage() {
                   Color: <span className="text-gray-500">{selectedColor}</span>
                 </h3>
                 <div className="flex gap-3">
-                  {colors.map((color) => (
+                  {product.colors.map((color) => (
                     <button
                       key={color.name}
                       onClick={() => setSelectedColor(color.name)}
                       className={`w-10 h-10 rounded-full border-2 transition-all ${
                         selectedColor === color.name
-                          ? "border-primary scale-110"
-                          : "border-gray-200 hover:scale-105"
-                      }`}
+                          ? "ring-2 ring-primary ring-offset-2"
+                          : "hover:scale-110"
+                      } ${color.hex === "#FFFFFF" ? "border-gray-300" : "border-transparent"}`}
                       style={{ backgroundColor: color.hex }}
                       aria-label={color.name}
+                      title={color.name}
                     />
                   ))}
                 </div>
@@ -142,11 +196,11 @@ export default function ProductPage() {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {sizes.map((size) => (
+                  {product.sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`w-14 h-12 border text-sm font-medium transition-colors ${
+                      className={`min-w-[3rem] px-3 h-12 border text-sm font-medium transition-all ${
                         selectedSize === size
                           ? "border-primary bg-primary text-white"
                           : "border-gray-300 text-gray-600 hover:border-primary"
@@ -168,7 +222,7 @@ export default function ProductPage() {
                   >
                     <Minus size={18} />
                   </button>
-                  <span className="w-12 h-12 flex items-center justify-center font-medium">
+                  <span className="w-12 h-12 flex items-center justify-center font-medium border-x border-gray-300">
                     {quantity}
                   </span>
                   <button
@@ -179,14 +233,27 @@ export default function ProductPage() {
                     <Plus size={18} />
                   </button>
                 </div>
-                <button className="btn-primary flex-1">ADD TO CART</button>
+                <button
+                  onClick={handleAddToCart}
+                  className="btn-primary flex-1"
+                >
+                  ADD TO CART
+                </button>
               </div>
 
               {/* Wishlist & Share */}
               <div className="flex items-center gap-6 mt-6">
-                <button className="flex items-center gap-2 text-gray-600 hover:text-accent transition-colors">
-                  <Heart size={20} />
-                  <span className="text-sm">Add to Wishlist</span>
+                <button
+                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-accent transition-colors"
+                >
+                  <Heart
+                    size={20}
+                    className={isWishlisted ? "fill-red-500 text-red-500" : ""}
+                  />
+                  <span className="text-sm">
+                    {isWishlisted ? "Added to Wishlist" : "Add to Wishlist"}
+                  </span>
                 </button>
                 <button className="flex items-center gap-2 text-gray-600 hover:text-accent transition-colors">
                   <Share2 size={20} />
@@ -221,26 +288,31 @@ export default function ProductPage() {
       </section>
 
       {/* Related Products */}
-      <section className="py-12 lg:py-16 bg-background">
-        <div className="container-custom">
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary mb-8">
-            You May Also Like
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {relatedProducts.map((item) => (
-              <Link key={item.id} href={`/shop/related-${item.id}`} className="group">
-                <div className="aspect-[3/4] bg-gray-200 mb-4 overflow-hidden">
-                  <div className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <h3 className="font-medium text-primary group-hover:text-accent transition-colors">
-                  {item.name}
-                </h3>
-                <p className="text-gray-500 mt-1">${item.price}.00</p>
-              </Link>
-            ))}
+      {relatedProducts.length > 0 && (
+        <section className="py-12 lg:py-16 bg-background">
+          <div className="container-custom">
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary mb-8">
+              You May Also Like
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              {relatedProducts.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  price={item.price}
+                  originalPrice={item.originalPrice}
+                  image={item.images[0]}
+                  hoverImage={item.images[1]}
+                  slug={item.slug}
+                  isNew={item.isNew}
+                  isBestSeller={item.isBestSeller}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

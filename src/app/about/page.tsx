@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 
 const values = [
@@ -31,7 +32,17 @@ export default function AboutPage() {
   return (
     <div className="pt-20 lg:pt-24">
       {/* Hero Section */}
-      <section className="relative h-[50vh] lg:h-[60vh] bg-background flex items-center">
+      <section className="relative h-[50vh] lg:h-[60vh] bg-background flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80"
+            alt="About AURELION"
+            fill
+            className="object-cover opacity-30"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/80 to-transparent" />
+        </div>
         <div className="container-custom relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -96,7 +107,14 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
               className="order-1 lg:order-2"
             >
-              <div className="aspect-[4/5] bg-gray-200" />
+              <div className="relative aspect-[4/5] overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=800&q=80"
+                  alt="Our Heritage"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </motion.div>
           </div>
         </div>
@@ -154,9 +172,9 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center"
+                className="text-center group"
               >
-                <div className="w-16 h-16 mx-auto mb-6 bg-accent/10 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-accent/10 rounded-full flex items-center justify-center group-hover:bg-accent/20 transition-colors">
                   <span className="font-serif text-2xl text-accent font-bold">
                     {index + 1}
                   </span>
@@ -183,7 +201,14 @@ export default function AboutPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="aspect-square bg-gray-200" />
+              <div className="relative aspect-square overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
+                  alt="Our Philosophy"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -217,10 +242,10 @@ export default function AboutPage() {
               </div>
               <Link
                 href="/shop"
-                className="btn-primary inline-flex items-center gap-2 mt-8"
+                className="btn-primary inline-flex items-center gap-2 mt-8 group"
               >
                 EXPLORE COLLECTION
-                <ArrowRight size={18} />
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
           </div>
@@ -242,9 +267,9 @@ export default function AboutPage() {
               Discover our latest collections and find pieces that speak to your
               sense of style and sophistication.
             </p>
-            <Link href="/shop" className="btn-primary inline-flex items-center gap-2">
+            <Link href="/shop" className="btn-primary inline-flex items-center gap-2 group">
               SHOP NOW
-              <ArrowRight size={18} />
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
         </div>
